@@ -3,7 +3,7 @@ import { Module } from "@nestjs/common";
 import { SubgraphService } from "./subgraph.service";
 
 @Module({
-  imports: [SubgraphService],
+  exports: [SubgraphService],
   providers: [SubgraphService],
 })
 export class SubgraphModule {}
