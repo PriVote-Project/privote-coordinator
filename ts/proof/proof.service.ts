@@ -18,12 +18,7 @@ import hre from "hardhat";
 import fs from "fs";
 import path from "path";
 
-import type {
-  IGenerateArgs,
-  IGenerateData,
-  IMergeArgs,
-  ISubmitProofsArgs,
-} from "./types";
+import type { IGenerateArgs, IGenerateData, IMergeArgs, ISubmitProofsArgs } from "./types";
 
 import { ErrorCodes } from "../common";
 import { FileService } from "../file/file.service";
@@ -62,19 +57,14 @@ export class ProofGeneratorService {
    * @param type - type of proofs to read (tally or process)
    * @returns proofs
    */
-  async readProofs(
-    folder: string,
-    type: "tally" | "process",
-  ): Promise<IProof[]> {
+  async readProofs(folder: string, type: "tally" | "process"): Promise<IProof[]> {
     const files = await fs.promises.readdir(folder);
     return Promise.all(
       files
         .filter((f) => f.startsWith(`${type}_`) && f.endsWith(".json"))
         .sort()
         .map(async (file) =>
-          fs.promises
-            .readFile(`${folder}/${file}`, "utf8")
-            .then((result) => JSON.parse(result) as IProof),
+          fs.promises.readFile(`${folder}/${file}`, "utf8").then((result) => JSON.parse(result) as IProof),
         ),
     );
   }
@@ -102,11 +92,7 @@ export class ProofGeneratorService {
     options?: IGenerateProofsOptions,
   ): Promise<IGenerateData> {
     try {
-      const signer = await this.sessionKeysService.getCoordinatorSigner(
-        chain,
-        sessionKeyAddress,
-        approval,
-      );
+      const signer = await this.sessionKeysService.getCoordinatorSigner(chain, sessionKeyAddress, approval);
 
       const pollData = await getPoll({
         maciAddress: maciContractAddress,
@@ -124,14 +110,10 @@ export class ProofGeneratorService {
         BigInt(publicKeyOnChain.y.toString()),
       ]);
 
-      const coordinatorKeypair = new Keypair(
-        PrivateKey.deserialize(coordinatorPrivateKey),
-      );
+      const coordinatorKeypair = new Keypair(PrivateKey.deserialize(coordinatorPrivateKey));
 
       if (!coordinatorKeypair.publicKey.equals(coordinatorPublicKeyOnChain)) {
-        this.logger.error(
-          `Error: ${ErrorCodes.PRIVATE_KEY_MISMATCH}, wrong private key`,
-        );
+        this.logger.error(`Error: ${ErrorCodes.PRIVATE_KEY_MISMATCH}, wrong private key`);
         throw new Error(ErrorCodes.PRIVATE_KEY_MISMATCH.toString());
       }
 
@@ -184,18 +166,8 @@ export class ProofGeneratorService {
    * @param args - merge arguments
    * @returns whether the proofs were successfully merged
    */
-  async merge({
-    maciContractAddress,
-    pollId,
-    approval,
-    sessionKeyAddress,
-    chain,
-  }: IMergeArgs): Promise<boolean> {
-    const signer = await this.sessionKeysService.getCoordinatorSigner(
-      chain,
-      sessionKeyAddress,
-      approval,
-    );
+  async merge({ maciContractAddress, pollId, approval, sessionKeyAddress, chain }: IMergeArgs): Promise<boolean> {
+    const signer = await this.sessionKeysService.getCoordinatorSigner(chain, sessionKeyAddress, approval);
 
     try {
       await mergeSignups({
@@ -204,10 +176,7 @@ export class ProofGeneratorService {
         signer,
       });
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("The state tree has already been merged")
-      ) {
+      if (error instanceof Error && error.message.includes("The state tree has already been merged")) {
         return true;
       }
       throw error;
@@ -228,11 +197,7 @@ export class ProofGeneratorService {
     approval,
     chain,
   }: ISubmitProofsArgs): Promise<ITallyData> {
-    const signer = await this.sessionKeysService.getCoordinatorSigner(
-      chain,
-      sessionKeyAddress,
-      approval,
-    );
+    const signer = await this.sessionKeysService.getCoordinatorSigner(chain, sessionKeyAddress, approval);
 
     const tallyData = await proveOnChain({
       pollId: BigInt(pollId),

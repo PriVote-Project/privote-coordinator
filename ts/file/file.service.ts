@@ -6,12 +6,8 @@ import FileSync from "lowdb/adapters/FileSync";
 import fs from "fs";
 import path from "path";
 
+import type { IGetPrivateKeyData, IGetPublicKeyData, IGetZkeyFilePathsData } from "./types";
 import type { Hex } from "viem";
-import type {
-  IGetPrivateKeyData,
-  IGetPublicKeyData,
-  IGetZkeyFilePathsData,
-} from "./types";
 
 import { ErrorCodes } from "../common";
 
@@ -43,11 +39,7 @@ export class FileService {
    */
   constructor() {
     this.logger = new Logger(FileService.name);
-    this.db = low(
-      new FileSync<TStorage>(
-        path.resolve(process.cwd(), "./session-keys.json"),
-      ),
-    );
+    this.db = low(new FileSync<TStorage>(path.resolve(process.cwd(), "./session-keys.json")));
   }
 
   /**
@@ -85,9 +77,7 @@ export class FileService {
    * @returns serialized RSA public key
    */
   async getPublicKey(): Promise<IGetPublicKeyData> {
-    const publicKey = await fs.promises.readFile(
-      path.resolve(process.env.COORDINATOR_PUBLIC_KEY_PATH!),
-    );
+    const publicKey = await fs.promises.readFile(path.resolve(process.env.COORDINATOR_PUBLIC_KEY_PATH!));
 
     return { publicKey: publicKey.toString() };
   }
@@ -98,9 +88,7 @@ export class FileService {
    * @returns serialized RSA private key
    */
   async getPrivateKey(): Promise<IGetPrivateKeyData> {
-    const privateKey = await fs.promises.readFile(
-      path.resolve(process.env.COORDINATOR_PRIVATE_KEY_PATH!),
-    );
+    const privateKey = await fs.promises.readFile(path.resolve(process.env.COORDINATOR_PRIVATE_KEY_PATH!));
 
     return { privateKey: privateKey.toString() };
   }
@@ -127,19 +115,10 @@ export class FileService {
     const filename = `${type}${mode ? modePrefixes[mode] : ""}_${params}`;
 
     const zkey = path.resolve(root, `${filename}/${filename}.0.zkey`);
-    const wasm = path.resolve(
-      root,
-      `${filename}/${filename}_js/${filename}.wasm`,
-    );
-    const witnessGenerator = path.resolve(
-      root,
-      `${filename}/${filename}_cpp/${filename}`,
-    );
+    const wasm = path.resolve(root, `${filename}/${filename}_js/${filename}.wasm`);
+    const witnessGenerator = path.resolve(root, `${filename}/${filename}_cpp/${filename}`);
 
-    if (
-      !fs.existsSync(zkey) ||
-      (!fs.existsSync(wasm) && !fs.existsSync(witnessGenerator))
-    ) {
+    if (!fs.existsSync(zkey) || (!fs.existsSync(wasm) && !fs.existsSync(witnessGenerator))) {
       this.logger.error(
         `Error: ${ErrorCodes.FILE_NOT_FOUND}, zkey: ${zkey}, wasm: ${wasm}, witnessGenerator: ${witnessGenerator}`,
       );

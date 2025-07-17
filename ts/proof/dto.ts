@@ -1,14 +1,6 @@
 import { EMode } from "@maci-protocol/sdk";
 import { ApiProperty } from "@nestjs/swagger";
-import {
-  IsEnum,
-  IsEthereumAddress,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from "class-validator";
+import { IsEnum, IsEthereumAddress, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 
 import type { Hex } from "viem";
 

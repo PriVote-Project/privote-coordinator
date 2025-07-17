@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-shadow */
-import { Body, Controller, HttpException, HttpStatus, Logger, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, HttpException, HttpStatus, Logger, Post } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from "@nestjs/swagger";
-
-import { AccountSignatureGuard } from "../auth/AccountSignatureGuard.service";
 
 import { DeployerService } from "./deployer.service";
 import { DeployerServiceDeployMaciDto, DeployerServiceDeployPollDto } from "./dto";
@@ -10,7 +8,6 @@ import { DeployerServiceDeployMaciDto, DeployerServiceDeployPollDto } from "./dt
 @ApiTags("v1/deploy")
 @ApiBearerAuth()
 @Controller("v1/deploy")
-@UseGuards(AccountSignatureGuard)
 export class DeployerController {
   /**
    * Logger
@@ -31,7 +28,10 @@ export class DeployerController {
    * @returns maci contract address
    */
   @ApiBody({ type: DeployerServiceDeployMaciDto })
-  @ApiResponse({ status: HttpStatus.CREATED, description: "The MACI contracts were successfully deployed" })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: "The MACI contracts were successfully deployed",
+  })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: "Forbidden" })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: "BadRequest" })
   @Post("maci")
@@ -49,7 +49,10 @@ export class DeployerController {
    * @returns the poll id
    */
   @ApiBody({ type: DeployerServiceDeployPollDto })
-  @ApiResponse({ status: HttpStatus.CREATED, description: "The Poll was successfully deployed" })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: "The Poll was successfully deployed",
+  })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: "Forbidden" })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: "BadRequest" })
   @Post("poll")

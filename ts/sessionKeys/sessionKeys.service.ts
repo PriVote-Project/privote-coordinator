@@ -1,17 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { toECDSASigner } from '@zerodev/permissions/signers'
-import { BrowserProvider, Signer } from 'ethers'
-import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
+import { Injectable, Logger } from "@nestjs/common";
+import { toECDSASigner } from "@zerodev/permissions/signers";
+import { BrowserProvider, Signer } from "ethers";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-import type { AASigner } from '@maci-protocol/contracts'
-import type { Hex } from 'viem'
+import type { AASigner } from "@maci-protocol/contracts";
+import type { Hex } from "viem";
 
-import { ErrorCodes, ESupportedNetworks, getSigner, KernelClientType } from '../common'
-import { getKernelClient } from '../common/accountAbstraction'
-import { FileService } from '../file/file.service'
+import { ErrorCodes, ESupportedNetworks, getSigner, KernelClientType } from "../common";
+import { getKernelClient } from "../common/accountAbstraction";
+import { FileService } from "../file/file.service";
 
-import { KernelEIP1193Provider } from './provider/KernelEIP1193Provider'
-import { IGenerateSessionKeyReturn } from './types'
+import { KernelEIP1193Provider } from "./provider/KernelEIP1193Provider";
+import { IGenerateSessionKeyReturn } from "./types";
 
 /**
  * SessionKeysService is responsible for generating and managing session keys.
@@ -21,7 +21,7 @@ export class SessionKeysService {
   /**
    * Logger
    */
-  private readonly logger: Logger
+  private readonly logger: Logger;
 
   /**
    * Create a new instance of SessionKeysService
@@ -29,7 +29,7 @@ export class SessionKeysService {
    * @param fileService - file service
    */
   constructor(private readonly fileService: FileService) {
-    this.logger = new Logger(SessionKeysService.name)
+    this.logger = new Logger(SessionKeysService.name);
   }
 
   /**
@@ -38,20 +38,20 @@ export class SessionKeysService {
    * @returns session key address
    */
   async generateSessionKey(): Promise<IGenerateSessionKeyReturn> {
-    const sessionPrivateKey = generatePrivateKey()
+    const sessionPrivateKey = generatePrivateKey();
 
     const sessionKeySigner = await toECDSASigner({
-      signer: privateKeyToAccount(sessionPrivateKey)
-    })
+      signer: privateKeyToAccount(sessionPrivateKey),
+    });
 
-    const sessionKeyAddress = sessionKeySigner.account.address
+    const sessionKeyAddress = sessionKeySigner.account.address;
 
     // save the key
-    this.fileService.storeSessionKey(sessionPrivateKey, sessionKeyAddress)
+    this.fileService.storeSessionKey(sessionPrivateKey, sessionKeyAddress);
 
     return {
-      sessionKeyAddress
-    }
+      sessionKeyAddress,
+    };
   }
 
   /**
@@ -65,22 +65,22 @@ export class SessionKeysService {
   async generateClientFromSessionKey(
     sessionKeyAddress: Hex,
     approval: string,
-    chain: ESupportedNetworks
+    chain: ESupportedNetworks,
   ): Promise<KernelClientType> {
     // retrieve the session key from the file service
-    const sessionKey = this.fileService.getSessionKey(sessionKeyAddress)
+    const sessionKey = this.fileService.getSessionKey(sessionKeyAddress);
 
     if (!sessionKey) {
-      this.logger.error(`Session key not found: ${sessionKeyAddress}`)
-      throw new Error(ErrorCodes.SESSION_KEY_NOT_FOUND.toString())
+      this.logger.error(`Session key not found: ${sessionKeyAddress}`);
+      throw new Error(ErrorCodes.SESSION_KEY_NOT_FOUND.toString());
     }
 
     try {
-      const kernelClient = getKernelClient(sessionKey, approval, chain)
-      return kernelClient
+      const kernelClient = getKernelClient(sessionKey, approval, chain);
+      return kernelClient;
     } catch (error) {
-      this.logger.error('Error:', error)
-      throw new Error(ErrorCodes.INVALID_APPROVAL.toString())
+      this.logger.error("Error:", error);
+      throw new Error(ErrorCodes.INVALID_APPROVAL.toString());
     }
   }
 
@@ -91,13 +91,13 @@ export class SessionKeysService {
    * @returns signer
    */
   async getKernelClientSigner(kernelClient: KernelClientType): Promise<AASigner> {
-    const kernelProvider = new KernelEIP1193Provider(kernelClient)
-    const ethersProvider = new BrowserProvider(kernelProvider)
-    const signer = await ethersProvider.getSigner()
-    const aaSigner = signer as AASigner
-    aaSigner.isAA = true
+    const kernelProvider = new KernelEIP1193Provider(kernelClient);
+    const ethersProvider = new BrowserProvider(kernelProvider);
+    const signer = await ethersProvider.getSigner();
+    const aaSigner = signer as AASigner;
+    aaSigner.isAA = true;
 
-    return aaSigner
+    return aaSigner;
   }
 
   /**
@@ -112,18 +112,14 @@ export class SessionKeysService {
   async getCoordinatorSigner(
     chain: ESupportedNetworks,
     sessionKeyAddress?: Hex,
-    approval?: string
+    approval?: string,
   ): Promise<AASigner | Signer> {
     if (sessionKeyAddress && approval) {
-      const kernelClient = await this.generateClientFromSessionKey(
-        sessionKeyAddress,
-        approval,
-        chain
-      )
-      return this.getKernelClientSigner(kernelClient)
+      const kernelClient = await this.generateClientFromSessionKey(sessionKeyAddress, approval, chain);
+      return this.getKernelClientSigner(kernelClient);
     }
 
-    return getSigner(chain)
+    return getSigner(chain);
   }
 
   /**
@@ -132,6 +128,6 @@ export class SessionKeysService {
    * @param sessionKeyAddress - key address
    */
   deactivateSessionKey(sessionKeyAddress: Hex): void {
-    this.fileService.deleteSessionKey(sessionKeyAddress)
+    this.fileService.deleteSessionKey(sessionKeyAddress);
   }
 }

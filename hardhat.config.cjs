@@ -7,8 +7,7 @@ const path = require("path");
 dotenv.config();
 
 const parentDir = __dirname.includes("build") ? ".." : "";
-const TEST_MNEMONIC =
-  "test test test test test test test test test test test junk";
+const TEST_MNEMONIC = "test test test test test test test test test test test junk";
 
 module.exports = {
   defaultNetwork: "sepolia",
