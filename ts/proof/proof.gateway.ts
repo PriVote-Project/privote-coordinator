@@ -1,8 +1,10 @@
-import { Logger, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Logger, UsePipes, ValidationPipe, UseGuards } from "@nestjs/common";
 import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from "@nestjs/websockets";
 
 import type { IGenerateProofsBatchData, IProof, ITallyData } from "@maci-protocol/sdk";
 import type { Server } from "socket.io";
+
+import { AccountSignatureGuard } from "../auth/AccountSignatureGuard.service";
 
 import { GenerateProofDto } from "./dto";
 import { ProofGeneratorService } from "./proof.service";
@@ -16,8 +18,7 @@ import { EProofGenerationEvents } from "./types";
     origin: process.env.COORDINATOR_ALLOWED_ORIGINS?.split(","),
   },
 })
-// TODO: Implement authentication using subgraph
-// @UseGuards(AccountSignatureGuard)
+@UseGuards(AccountSignatureGuard)
 export class ProofGateway {
   /**
    * Logger

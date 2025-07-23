@@ -1,3 +1,4 @@
+import { IG1ContractParams } from "@maci-protocol/domainobjs";
 import { EPolicies, EInitialVoiceCreditProxies, EMode } from "@maci-protocol/sdk";
 import { SendUserOperationParameters } from "viem/account-abstraction";
 
@@ -270,6 +271,21 @@ export type IPolicyArgs =
   | IERC20VotesPolicyArgs
   | IERC20PolicyArgs;
 
+/**
+ * IDeployPolicyConfig represents the configuration for deploying a policy
+ */
+export interface IDeployPolicyConfig {
+  /**
+   * The policy type (e.g. FreeForAll, ERC20Votes, etc)
+   */
+  type: EPolicies;
+
+  /**
+   * The policy arguments depending on each policy
+   */
+  args?: IPolicyArgs;
+}
+
 export type IInitialVoiceCreditProxyArgs = IConstantInitialVoiceCreditProxyArgs;
 /**
  * DeployMaciConfig is the configuration for deploying MACI
@@ -278,10 +294,7 @@ export interface IDeployMaciConfig {
   /**
    * The policy configuration
    */
-  policy: {
-    type: EPolicies;
-    args?: IPolicyArgs;
-  };
+  policy: IDeployPolicyConfig;
 
   /**
    * The MACI configuration
@@ -289,7 +302,7 @@ export interface IDeployMaciConfig {
   MACI: {
     stateTreeDepth: number;
     policy: EPolicies;
-    mode: EMode;
+    modes: EMode[];
   };
 
   /**
@@ -314,6 +327,10 @@ export interface IDeployMaciConfig {
  * DeployPollConfig is the configuration for deploying a poll
  */
 export interface IDeployPollConfig {
+  /**
+   * The poll's coordinator's public key
+   */
+  coordinatorPublicKey: IG1ContractParams;
   /**
    * The poll's start date
    */
@@ -352,11 +369,7 @@ export interface IDeployPollConfig {
   /**
    * The policy configuration
    */
-  policy: {
-    type: EPolicies;
-    args?: IPolicyArgs;
-    address?: Hex;
-  };
+  policy: IDeployPolicyConfig;
 
   /**
    * The initial voice credits proxy configuration

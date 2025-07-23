@@ -28,10 +28,7 @@ export class DeployerController {
    * @returns maci contract address
    */
   @ApiBody({ type: DeployerServiceDeployMaciDto })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: "The MACI contracts were successfully deployed",
-  })
+  @ApiResponse({ status: HttpStatus.CREATED, description: "The MACI contracts were successfully deployed" })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: "Forbidden" })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: "BadRequest" })
   @Post("maci")
@@ -49,10 +46,7 @@ export class DeployerController {
    * @returns the poll id
    */
   @ApiBody({ type: DeployerServiceDeployPollDto })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: "The Poll was successfully deployed",
-  })
+  @ApiResponse({ status: HttpStatus.CREATED, description: "The Poll was successfully deployed" })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: "Forbidden" })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: "BadRequest" })
   @Post("poll")
