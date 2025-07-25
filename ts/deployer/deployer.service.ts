@@ -1,4 +1,4 @@
-import { VerifyingKey, PublicKey } from "@maci-protocol/domainobjs";
+import { VerifyingKey } from "@maci-protocol/domainobjs";
 import {
   ContractStorage,
   EPolicies,
@@ -60,6 +60,7 @@ import { BaseContract, Signer } from "ethers";
 import { type Hex } from "viem";
 
 import { ErrorCodes, ESupportedNetworks } from "../common";
+import { getCoordinatorKeypair } from "../common/coordinatorKeypair";
 import { FileService } from "../file/file.service";
 import { SessionKeysService } from "../sessionKeys/sessionKeys.service";
 
@@ -633,10 +634,7 @@ export class DeployerService {
     }
 
     // instantiate the coordinator MACI keypair
-    const coordinatorPublicKey = new PublicKey([
-      BigInt(config.coordinatorPublicKey.x),
-      BigInt(config.coordinatorPublicKey.y),
-    ]);
+    const coordinatorKeypair = getCoordinatorKeypair();
 
     const deployPollArgs = {
       maciAddress,
@@ -646,7 +644,7 @@ export class DeployerService {
       voteOptionTreeDepth: config.voteOptionTreeDepth,
       messageBatchSize: config.messageBatchSize,
       stateTreeDepth: config.pollStateTreeDepth,
-      coordinatorPublicKey,
+      coordinatorPublicKey: coordinatorKeypair.publicKey,
       verifierContractAddress: verifierAddress,
       verifyingKeysRegistryContractAddress: verifyingKeysRegistryAddress,
       mode: config.mode,

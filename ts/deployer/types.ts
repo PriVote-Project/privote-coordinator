@@ -1,4 +1,3 @@
-import { IG1ContractParams } from "@maci-protocol/domainobjs";
 import { EPolicies, EInitialVoiceCreditProxies, EMode } from "@maci-protocol/sdk";
 import { SendUserOperationParameters } from "viem/account-abstraction";
 
@@ -327,10 +326,6 @@ export interface IDeployMaciConfig {
  * DeployPollConfig is the configuration for deploying a poll
  */
 export interface IDeployPollConfig {
-  /**
-   * The poll's coordinator's public key
-   */
-  coordinatorPublicKey: IG1ContractParams;
   /**
    * The poll's start date
    */
