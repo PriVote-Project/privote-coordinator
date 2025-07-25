@@ -10,7 +10,6 @@ import {
   EContracts,
   EInitialVoiceCreditProxies,
   EMode,
-  deployPoll,
   ISetVerifyingKeysArgs,
   extractAllVerifyingKeys,
   deployConstantInitialVoiceCreditProxy,
@@ -54,12 +53,13 @@ import {
   TokenPolicyFactory,
   ZupassCheckerFactory,
   ZupassPolicyFactory,
+  contractExists,
 } from "@maci-protocol/sdk";
 import { Injectable } from "@nestjs/common";
 import { BaseContract, Signer } from "ethers";
 import { type Hex } from "viem";
 
-import { ErrorCodes, ESupportedNetworks } from "../common";
+import { ErrorCodes, ESupportedNetworks, PrivoteFactory } from "../common";
 import { getCoordinatorKeypair } from "../common/coordinatorKeypair";
 import { FileService } from "../file/file.service";
 import { SessionKeysService } from "../sessionKeys/sessionKeys.service";
@@ -597,26 +597,14 @@ export class DeployerService {
    * @param args - deploy poll dto
    * @returns poll id
    */
-  async deployPoll({ approval, sessionKeyAddress, chain, config }: IDeployPollArgs): Promise<{ pollId: string }> {
+  async deployPoll({
+    approval,
+    sessionKeyAddress,
+    chain,
+    privoteAddress,
+    config,
+  }: IDeployPollArgs): Promise<{ pollId: string }> {
     const signer = await this.sessionKeysService.getCoordinatorSigner(chain, sessionKeyAddress, approval);
-
-    // check if there is a maci contract deployed on this chain
-    const maciAddress = this.storage.getAddress(EContracts.MACI, chain);
-    if (!maciAddress) {
-      throw new Error(ErrorCodes.MACI_NOT_DEPLOYED.toString());
-    }
-
-    // check if there is a verifier deployed on this chain
-    const verifierAddress = this.storage.getAddress(EContracts.Verifier, chain);
-    if (!verifierAddress) {
-      throw new Error(ErrorCodes.VERIFIER_NOT_DEPLOYED.toString());
-    }
-
-    // check if there is a verifyingKey registry deployed on this chain
-    const verifyingKeysRegistryAddress = this.storage.getAddress(EContracts.VerifyingKeysRegistry, chain);
-    if (!verifyingKeysRegistryAddress) {
-      throw new Error(ErrorCodes.VERIFYING_KEYS_REGISTRY_NOT_DEPLOYED.toString());
-    }
 
     const policyContract = await this.deployAndSavePolicy(signer, chain, config.policy);
     const policyAddress = (await policyContract.getAddress()) as Hex;
@@ -633,32 +621,44 @@ export class DeployerService {
       initialVoiceCreditProxyAddress = (await initialVoiceCreditProxyContract.getAddress()) as Hex;
     }
 
+    const isPrivoteExists = await contractExists(signer.provider!, privoteAddress);
+
+    if (!isPrivoteExists) {
+      throw new Error("Privote contract does not exist");
+    }
+
+    const privoteContract = PrivoteFactory.connect(privoteAddress, signer) as any;
+
+    const pollId = await privoteContract.nextPollId();
+
     // instantiate the coordinator MACI keypair
     const coordinatorKeypair = getCoordinatorKeypair();
 
-    const deployPollArgs = {
-      maciAddress,
-      pollStartTimestamp: config.startDate,
-      pollEndTimestamp: config.endDate,
-      tallyProcessingStateTreeDepth: config.tallyProcessingStateTreeDepth,
-      voteOptionTreeDepth: config.voteOptionTreeDepth,
-      messageBatchSize: config.messageBatchSize,
-      stateTreeDepth: config.pollStateTreeDepth,
-      coordinatorPublicKey: coordinatorKeypair.publicKey,
-      verifierContractAddress: verifierAddress,
-      verifyingKeysRegistryContractAddress: verifyingKeysRegistryAddress,
-      mode: config.mode,
-      policyContractAddress: policyAddress,
-      initialVoiceCreditProxyContractAddress: initialVoiceCreditProxyAddress,
-      relayers: config.relayers ? config.relayers.map((address) => address as Hex) : [],
-      voteOptions: Number(config.voteOptions),
-      initialVoiceCredits: Number(config.initialVoiceCreditsProxy.args.amount),
-      signer,
-    };
-    const { pollContractAddress, messageProcessorContractAddress, tallyContractAddress, pollId } =
-      await deployPoll(deployPollArgs);
+    const deployPollArgs = [
+      config.name,
+      config.options,
+      config.optionsInfo,
+      config.metadata,
+      config.startDate,
+      config.endDate,
+      config.mode,
+      coordinatorKeypair.publicKey.asContractParam(),
+      policyAddress,
+      initialVoiceCreditProxyAddress,
+      config.relayers ? config.relayers.map((address) => address as Hex) : [],
+    ];
 
+    const receipt = await privoteContract.createPoll(...deployPollArgs).then((tx: { wait: () => any }) => tx.wait());
+
+    if (receipt?.status !== 1) {
+      throw new Error("Deploy poll transaction is failed");
+    }
+
+    const pollContracts = await privoteContract.getPoll(pollId);
+    const pollContractAddress = pollContracts.poll;
     const poll = PollFactory.connect(pollContractAddress, signer);
+    const messageProcessorContractAddress = pollContracts.messageProcessor;
+    const tallyContractAddress = pollContracts.tally;
 
     // store to storage
     await Promise.all([

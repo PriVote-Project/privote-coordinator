@@ -50,6 +50,11 @@ export interface IDeployPollArgs {
   chain: ESupportedNetworks;
 
   /**
+   * The Privote contract Address
+   */
+  privoteAddress: Hex;
+
+  /**
    * The configuration for deploying a poll
    */
   config: IDeployPollConfig;
@@ -327,6 +332,26 @@ export interface IDeployMaciConfig {
  */
 export interface IDeployPollConfig {
   /**
+   * The poll's title
+   */
+  name: string;
+
+  /**
+   * The poll's options
+   */
+  options: string[];
+
+  /**
+   * The poll's options info
+   */
+  optionsInfo: Hex[];
+
+  /**
+   * The poll's metadata
+   */
+  metadata: string;
+
+  /**
    * The poll's start date
    */
   startDate: number;
@@ -340,26 +365,6 @@ export interface IDeployPollConfig {
    * Voting mode
    */
   mode: EMode;
-
-  /**
-   * Determines the tally batch size
-   */
-  tallyProcessingStateTreeDepth: number;
-
-  /**
-   * Message batch size
-   */
-  messageBatchSize: number;
-
-  /**
-   * Poll state tree depth
-   */
-  pollStateTreeDepth: number;
-
-  /**
-   * Vote option tree depth
-   */
-  voteOptionTreeDepth: number;
 
   /**
    * The policy configuration
@@ -379,11 +384,6 @@ export interface IDeployPollConfig {
    * The relayer addresses
    */
   relayers?: string[];
-
-  /**
-   * Number of valid vote options
-   */
-  voteOptions: bigint | string;
 }
 
 /**

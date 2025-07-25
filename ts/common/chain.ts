@@ -2,6 +2,7 @@ import { JsonRpcProvider, Signer, Wallet } from "ethers";
 
 import { ErrorCodes } from "./errors";
 import { ESupportedNetworks } from "./networks";
+import { getInfuraHttpUrl } from "./constants";
 
 /**
  * Get the RPC url for the chain we need to interact with
@@ -10,18 +11,13 @@ import { ESupportedNetworks } from "./networks";
  * @returns the RPC url for the network
  */
 export const getRpcUrl = (network: ESupportedNetworks): string => {
-  const rpcUrl = process.env.COORDINATOR_RPC_URL;
+  const rpcApiKey = process.env.COORDINATOR_RPC_API_KEY;
 
-  if (!rpcUrl) {
-    throw new Error(ErrorCodes.COORDINATOR_RPC_URL_NOT_SET.toString());
+  if (!rpcApiKey) {
+    throw new Error(ErrorCodes.COORDINATOR_RPC_API_KEY_NOT_SET.toString());
   }
 
-  const supportedNetworks = [ESupportedNetworks.OPTIMISM_SEPOLIA, ESupportedNetworks.ETHEREUM_SEPOLIA];
-  if (!supportedNetworks.includes(network)) {
-    throw new Error(ErrorCodes.UNSUPPORTED_NETWORK.toString());
-  }
-
-  return rpcUrl;
+  return getInfuraHttpUrl(network);
 };
 
 /**

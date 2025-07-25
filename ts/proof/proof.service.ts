@@ -1,4 +1,4 @@
-import { Keypair, PrivateKey, PublicKey } from "@maci-protocol/domainobjs";
+import { PublicKey } from "@maci-protocol/domainobjs";
 import {
   Deployment,
   EContracts,
@@ -23,6 +23,7 @@ import type { IGenerateArgs, IGenerateData, IMergeArgs, ISubmitProofsArgs } from
 import { ErrorCodes } from "../common";
 import { FileService } from "../file/file.service";
 import { SessionKeysService } from "../sessionKeys/sessionKeys.service";
+import { getCoordinatorKeypair } from "../common/coordinatorKeypair";
 
 /**
  * ProofGeneratorService is responsible for generating message processing and tally proofs.
@@ -82,7 +83,6 @@ export class ProofGeneratorService {
       chain,
       poll,
       maciContractAddress,
-      coordinatorPrivateKey,
       mode,
       startBlock,
       endBlock,
@@ -110,7 +110,7 @@ export class ProofGeneratorService {
         BigInt(publicKeyOnChain.y.toString()),
       ]);
 
-      const coordinatorKeypair = new Keypair(PrivateKey.deserialize(coordinatorPrivateKey));
+      const coordinatorKeypair = getCoordinatorKeypair();
 
       if (!coordinatorKeypair.publicKey.equals(coordinatorPublicKeyOnChain)) {
         this.logger.error(`Error: ${ErrorCodes.PRIVATE_KEY_MISMATCH}, wrong private key`);

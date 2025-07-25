@@ -93,6 +93,16 @@ export class DeployerServiceDeployPollDto {
   chain!: ESupportedNetworks;
 
   /**
+   * Private contract Address
+   */
+  @ApiProperty({
+    description: "Private contract Address",
+    type: String,
+  })
+  @IsString()
+  privoteAddress!: Hex;
+
+  /**
    * Config
    */
   @ApiProperty({

@@ -63,11 +63,6 @@ export interface IGenerateArgs {
   mode: EMode;
 
   /**
-   * Poll Coordinator's Private Key
-   */
-  coordinatorPrivateKey: string;
-
-  /**
    * Start block for event processing
    */
   startBlock?: number;

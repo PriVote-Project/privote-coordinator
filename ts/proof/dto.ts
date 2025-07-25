@@ -33,16 +33,6 @@ export class GenerateProofDto {
   maciContractAddress!: string;
 
   /**
-   * Coordinator private key
-   */
-  @ApiProperty({
-    description: "Coordinator private key",
-    type: String,
-  })
-  @IsString()
-  coordinatorPrivateKey!: string;
-
-  /**
    * Voting mode
    */
   @ApiProperty({
