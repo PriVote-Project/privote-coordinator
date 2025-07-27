@@ -56,7 +56,7 @@ import {
   TokenPolicyFactory,
   VerifyingKeysRegistry__factory as VerifyingKeysRegistryFactory,
   ZupassCheckerFactory,
-  ZupassPolicyFactory,
+  ZupassPolicyFactory
 } from "@maci-protocol/sdk";
 import { Injectable } from "@nestjs/common";
 import { BaseContract, Signer } from "ethers";
@@ -705,6 +705,8 @@ export class DeployerService {
     const poll = PollFactory.connect(pollContractAddress, signer);
     const messageProcessorContractAddress = pollContracts.messageProcessor;
     const tallyContractAddress = pollContracts.tally;
+
+    await policyContract.setTarget(pollContractAddress).then((tx) => tx.wait());
 
     // store to storage
     await Promise.all([
