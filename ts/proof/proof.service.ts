@@ -2,17 +2,14 @@ import { PublicKey } from "@maci-protocol/domainobjs";
 import {
   Deployment,
   EContracts,
-  EMode,
-  type IGenerateProofsOptions,
-  IProof,
-  ITallyData,
   type Poll,
-  generateProofs,
+  type IGenerateProofsOptions,
   getPoll,
   mergeSignups,
-  proveOnChain,
+  EMode,
 } from "@maci-protocol/sdk";
-import { Injectable, Logger } from "@nestjs/common";
+import { IProof, ITallyData, generateProofs, proveOnChain } from "@maci-protocol/sdk";
+import { Logger, Injectable } from "@nestjs/common";
 import hre from "hardhat";
 
 import fs from "fs";
@@ -21,9 +18,9 @@ import path from "path";
 import type { IGenerateArgs, IGenerateData, IMergeArgs, ISubmitProofsArgs } from "./types";
 
 import { ErrorCodes } from "../common";
+import { getCoordinatorKeypair } from "../common/coordinatorKeypair";
 import { FileService } from "../file/file.service";
 import { SessionKeysService } from "../sessionKeys/sessionKeys.service";
-import { getCoordinatorKeypair } from "../common/coordinatorKeypair";
 
 /**
  * ProofGeneratorService is responsible for generating message processing and tally proofs.
@@ -169,18 +166,11 @@ export class ProofGeneratorService {
   async merge({ maciContractAddress, pollId, approval, sessionKeyAddress, chain }: IMergeArgs): Promise<boolean> {
     const signer = await this.sessionKeysService.getCoordinatorSigner(chain, sessionKeyAddress, approval);
 
-    try {
-      await mergeSignups({
-        maciAddress: maciContractAddress,
-        pollId: BigInt(pollId),
-        signer,
-      });
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("The state tree has already been merged")) {
-        return true;
-      }
-      throw error;
-    }
+    await mergeSignups({
+      maciAddress: maciContractAddress,
+      pollId: BigInt(pollId),
+      signer,
+    });
 
     return true;
   }

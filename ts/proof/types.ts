@@ -1,4 +1,4 @@
-import type { EMode, IProof, ITallyData } from "@maci-protocol/sdk";
+import type { ITallyData, IProof, EMode } from "@maci-protocol/sdk";
 import type { Hex } from "viem";
 
 import { ESupportedNetworks } from "../common";
