@@ -38,7 +38,7 @@ module.exports = {
     artifacts: path.resolve(
       __dirname,
       parentDir,
-      "./node_modules/@maci-protocol/sdk/node_modules/@maci-protocol/contracts/artifacts",
+      "./node_modules/@maci-protocol/contracts/build/artifacts",
     ),
   },
 };
