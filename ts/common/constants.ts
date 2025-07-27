@@ -2,15 +2,6 @@ import { ErrorCodes } from "./errors";
 import { ESupportedNetworks } from "./networks";
 
 /**
- * Constants for subgraph configuration
- */
-export const constants = {
-  slugs: {
-    subgraph: "subgraph",
-  },
-} as const;
-
-/**
  * Environment variables for subgraph configuration
  */
 export const SUBGRAPH_CONFIG = {
@@ -25,7 +16,7 @@ export const SUBGRAPH_CONFIG = {
  * @returns the subgraph URL
  */
 export const buildSubgraphUrl = (chainSlug: string): string =>
-  `https://api.goldsky.com/api/public/${SUBGRAPH_CONFIG.PROJECT_ID}/subgraphs/privote-${constants.slugs.subgraph}/${SUBGRAPH_CONFIG.VERSION}/${chainSlug}`;
+  `https://api.goldsky.com/api/public/${SUBGRAPH_CONFIG.PROJECT_ID}/subgraphs/privote-${chainSlug}/${SUBGRAPH_CONFIG.VERSION}/gn`;
 
 /**
  * Mapping of chainId to RPC chain name an format followed by infura

@@ -93,25 +93,7 @@ export class ProofServiceGuard implements CanActivate {
         chainValue as ESupportedNetworks,
       );
 
-      // Compare coordinators
-      const isAuthorized = coordinatorFromSignature === coordinatorFromSubgraph;
-
-      if (!isAuthorized) {
-        this.logger.warn("Coordinator mismatch", {
-          pollId,
-          chain: chainValue,
-          coordinatorFromSignature,
-          coordinatorFromSubgraph,
-        });
-      } else {
-        this.logger.log("Coordinator authorized", {
-          pollId,
-          chain: chainValue,
-          coordinator: coordinatorFromSignature,
-        });
-      }
-
-      return isAuthorized;
+      return coordinatorFromSignature === coordinatorFromSubgraph;
     } catch (error) {
       this.logger.error("Error in ProofServiceGuard", error);
       return false;

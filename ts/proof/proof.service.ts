@@ -99,6 +99,7 @@ export class ProofGeneratorService {
       const pollContract = await this.deployment.getContract<Poll>({
         name: EContracts.Poll,
         address: pollData.address,
+        signer,
       });
 
       const publicKeyOnChain = await pollContract.coordinatorPublicKey();

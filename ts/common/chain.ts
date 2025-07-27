@@ -1,8 +1,8 @@
 import { JsonRpcProvider, Signer, Wallet } from "ethers";
 
+import { getInfuraHttpUrl } from "./constants";
 import { ErrorCodes } from "./errors";
 import { ESupportedNetworks } from "./networks";
-import { getInfuraHttpUrl } from "./constants";
 
 /**
  * Get the RPC url for the chain we need to interact with
@@ -27,8 +27,8 @@ export const getRpcUrl = (network: ESupportedNetworks): string => {
  */
 export const getSigner = (chain: ESupportedNetworks): Signer => {
   const wallet = new Wallet(process.env.PRIVATE_KEY!);
-  const alchemyRpcUrl = getRpcUrl(chain);
-  const provider = new JsonRpcProvider(alchemyRpcUrl);
+  const infuraRpcUrl = getRpcUrl(chain);
+  const provider = new JsonRpcProvider(infuraRpcUrl);
 
   return wallet.connect(provider);
 };

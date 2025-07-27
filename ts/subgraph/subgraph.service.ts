@@ -30,7 +30,7 @@ export class SubgraphService {
     const subgraphUrl = buildSubgraphUrl(chain);
 
     const query = `
-      query GetPollCoordinator($pollId: ID!) {
+      query GetPollCoordinator($pollId: String!) {
         polls(where: { pollId: $pollId }) {
           id
           owner
@@ -44,8 +44,6 @@ export class SubgraphService {
     };
 
     try {
-      this.logger.log(`Fetching coordinator for poll ${pollId} on ${chain}`, { url: subgraphUrl });
-
       const response = await fetch(subgraphUrl, {
         method: "POST",
         headers: {
@@ -68,7 +66,6 @@ export class SubgraphService {
       }
 
       const coordinator = result.data.polls[0].owner.toLowerCase();
-      this.logger.log(`Found coordinator ${coordinator} for poll ${pollId} on ${chain}`);
 
       return coordinator;
     } catch (error) {
