@@ -28,7 +28,8 @@
     "types": "tsc -p tsconfig.json --noEmit",
     "generate-maci-keypair": "pnpm run run:node ./scripts/generateMaciKeypair.ts",
     "generate-keypair": "pnpm run run:node ./scripts/generateKeypair.ts",
-    "get-auth-header": "pnpm run run:node ./scripts/getAuthHeader.ts"
+    "get-auth-header": "pnpm run run:node ./scripts/getAuthHeader.ts",
+    "download-zkeys:test": "./scripts/download_zkeys.sh"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.97.1",
