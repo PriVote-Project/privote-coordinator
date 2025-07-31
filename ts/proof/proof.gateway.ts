@@ -4,7 +4,7 @@ import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, WsExc
 import type { IGenerateProofsBatchData, IProof, ITallyData } from "@maci-protocol/sdk";
 import type { Server } from "socket.io";
 
-import { AccountSignatureGuard } from "../auth/AccountSignatureGuard.service";
+import { ProofServiceGuard } from "../auth/ProofServiceGuard.service";
 
 import { GenerateProofDto } from "./dto";
 import { ProofGeneratorService } from "./proof.service";
@@ -18,7 +18,7 @@ import { EProofGenerationEvents } from "./types";
     origin: process.env.COORDINATOR_ALLOWED_ORIGINS?.split(","),
   },
 })
-@UseGuards(AccountSignatureGuard)
+@UseGuards(ProofServiceGuard)
 export class ProofGateway {
   /**
    * Logger
