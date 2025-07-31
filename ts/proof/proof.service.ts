@@ -147,6 +147,7 @@ export class ProofGeneratorService {
         tallyFile: path.resolve("./tally.json"),
       });
 
+      options?.onComplete?.(processProofs, tallyData);
       return {
         processProofs,
         tallyProofs,
