@@ -4,12 +4,14 @@ import type { Hex } from "viem";
 import { ESupportedNetworks } from "../common";
 
 /**
- * WS events for proof generation
+ * WS events for proof workflow (merge -> generate -> submit)
  */
 export enum EProofGenerationEvents {
   START = "start-generation",
   PROGRESS = "progress-generation",
-  FINISH = "finish-generation",
+  MERGE_FINISH = "finish-merge",
+  GENERATE_FINISH = "finish-generation",
+  SUBMIT_FINISH = "finish-submit",
   ERROR = "exception",
 }
 

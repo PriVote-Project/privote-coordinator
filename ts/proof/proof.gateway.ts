@@ -39,14 +39,16 @@ export class ProofGateway {
   constructor(private readonly proofGeneratorService: ProofGeneratorService) {}
 
   /**
-   * Generate proofs api method.
+   * Start full proof workflow (merge -> generate -> submit) via websocket.
    * Events:
    * 1. EProofGenerationEvents.START - trigger method call
-   * 2. EProofGenerationEvents.PROGRESS - returns generated proofs with batch info
-   * 3. EProofGenerationEvents.FINISH - returns generated proofs and tally data when available
-   * 4. EProofGenerationEvents.ERROR - triggered when exception is thrown
+   * 2. EProofGenerationEvents.MERGE_FINISH - emitted after state/message trees are merged
+   * 3. EProofGenerationEvents.PROGRESS - generation batch progress (may emit multiple times)
+   * 4. EProofGenerationEvents.GENERATE_FINISH - emitted when proof generation completes (proofs + tallyData)
+   * 5. EProofGenerationEvents.SUBMIT_FINISH - emitted after successful on-chain submit (tallyData)
+   * 6. EProofGenerationEvents.ERROR - emitted when any step fails
    *
-   * @param args - generate proof dto
+   * @param data - generate proof dto (used for all steps)
    */
   @SubscribeMessage(EProofGenerationEvents.START)
   @UsePipes(
@@ -61,19 +63,58 @@ export class ProofGateway {
     @MessageBody()
     data: GenerateProofDto,
   ): Promise<void> {
-    await this.proofGeneratorService.generate(data, {
-      onBatchComplete: (result: IGenerateProofsBatchData) => {
-        this.server.emit(EProofGenerationEvents.PROGRESS, result);
-      },
-      onComplete: (proofs: IProof[], tallyData?: ITallyData) => {
-        this.server.emit(EProofGenerationEvents.FINISH, { proofs, tallyData });
-      },
-      onFail: (error: Error) => {
-        this.logger.error(`Error:`, error);
-        this.server.emit(EProofGenerationEvents.ERROR, {
-          message: error.message,
-        });
-      },
-    });
+    // 1) Merge
+    try {
+      await this.proofGeneratorService.merge({
+        maciContractAddress: data.maciContractAddress,
+        pollId: data.poll,
+        approval: data.approval,
+        sessionKeyAddress: data.sessionKeyAddress,
+        chain: data.chain,
+      });
+
+      this.server.emit(EProofGenerationEvents.MERGE_FINISH, { pollId: data.poll });
+    } catch (error) {
+      this.logger.error(`Error during merge:`, error as Error);
+      this.server.emit(EProofGenerationEvents.ERROR, { message: (error as Error).message });
+      return;
+    }
+
+    // 2) Generate
+    try {
+      await this.proofGeneratorService.generate(data, {
+        onBatchComplete: (result: IGenerateProofsBatchData) => {
+          this.server.emit(EProofGenerationEvents.PROGRESS, result);
+        },
+        onComplete: (proofs: IProof[], tallyData?: ITallyData) => {
+          this.server.emit(EProofGenerationEvents.GENERATE_FINISH, { proofs, tallyData });
+        },
+        onFail: (error: Error) => {
+          this.logger.error(`Error during generation:`, error);
+          this.server.emit(EProofGenerationEvents.ERROR, {
+            message: error.message,
+          });
+        },
+      });
+    } catch (error) {
+      // error already emitted via onFail above; just stop the workflow
+      return;
+    }
+
+    // 3) Submit on-chain
+    try {
+      const tallyData = await this.proofGeneratorService.submit({
+        maciContractAddress: data.maciContractAddress,
+        pollId: data.poll,
+        approval: data.approval,
+        sessionKeyAddress: data.sessionKeyAddress,
+        chain: data.chain,
+      });
+
+      this.server.emit(EProofGenerationEvents.SUBMIT_FINISH, { tallyData });
+    } catch (error) {
+      this.logger.error(`Error during submit:`, error as Error);
+      this.server.emit(EProofGenerationEvents.ERROR, { message: (error as Error).message });
+    }
   }
 }

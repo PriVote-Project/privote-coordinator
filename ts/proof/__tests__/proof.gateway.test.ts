@@ -29,6 +29,8 @@ describe("ProofGateway", () => {
 
   const mockGeneratorService = {
     generate: jest.fn(),
+    merge: jest.fn(),
+    submit: jest.fn(),
   };
 
   const mockEmit = jest.fn();
@@ -37,14 +39,15 @@ describe("ProofGateway", () => {
     const testModule = await Test.createTestingModule({ providers: [ProofGateway] })
       .useMocker((token) => {
         if (token === ProofGeneratorService) {
+          mockGeneratorService.merge.mockResolvedValue(true);
           mockGeneratorService.generate.mockImplementation((_, options?: IGenerateProofsOptions) => {
             options?.onBatchComplete?.({ current: 1, total: 2, proofs: defaultProofGeneratorData.processProofs });
             options?.onComplete?.(
               defaultProofGeneratorData.processProofs.concat(defaultProofGeneratorData.tallyProofs),
               defaultProofGeneratorData.tallyData,
             );
-            options?.onFail?.(new Error("error"));
           });
+          mockGeneratorService.submit.mockResolvedValue(defaultProofGeneratorData.tallyData);
 
           return mockGeneratorService;
         }
@@ -69,16 +72,19 @@ describe("ProofGateway", () => {
   test("should start proof generation properly", async () => {
     await gateway.generate(defaultProofGeneratorArgs);
 
-    expect(mockEmit).toHaveBeenCalledTimes(3);
-    expect(mockEmit).toHaveBeenNthCalledWith(1, EProofGenerationEvents.PROGRESS, {
+    expect(mockEmit).toHaveBeenCalledTimes(4);
+    expect(mockEmit).toHaveBeenNthCalledWith(1, EProofGenerationEvents.MERGE_FINISH, { pollId: 0 });
+    expect(mockEmit).toHaveBeenNthCalledWith(2, EProofGenerationEvents.PROGRESS, {
       current: 1,
       total: 2,
       proofs: defaultProofGeneratorData.processProofs,
     });
-    expect(mockEmit).toHaveBeenNthCalledWith(2, EProofGenerationEvents.FINISH, {
+    expect(mockEmit).toHaveBeenNthCalledWith(3, EProofGenerationEvents.GENERATE_FINISH, {
       proofs: defaultProofGeneratorData.processProofs.concat(defaultProofGeneratorData.tallyProofs),
       tallyData: defaultProofGeneratorData.tallyData,
     });
-    expect(mockEmit).toHaveBeenNthCalledWith(3, EProofGenerationEvents.ERROR, { message: "error" });
+    expect(mockEmit).toHaveBeenNthCalledWith(4, EProofGenerationEvents.SUBMIT_FINISH, {
+      tallyData: defaultProofGeneratorData.tallyData,
+    });
   });
 });
