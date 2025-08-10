@@ -49,7 +49,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, document);
 
-  await app.listen(process.env.COORDINATOR_PORT || 3000);
+  await app.listen(process.env.COORDINATOR_PORT || 3000, process.env.COORDINATOR_HOST || "127.0.0.1");
 }
 
 bootstrap();
