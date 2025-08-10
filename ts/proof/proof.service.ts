@@ -168,11 +168,19 @@ export class ProofGeneratorService {
   async merge({ maciContractAddress, pollId, approval, sessionKeyAddress, chain }: IMergeArgs): Promise<boolean> {
     const signer = await this.sessionKeysService.getCoordinatorSigner(chain, sessionKeyAddress, approval);
 
-    await mergeSignups({
-      maciAddress: maciContractAddress,
-      pollId: BigInt(pollId),
-      signer,
-    });
+    try {
+      await mergeSignups({
+          maciAddress: maciContractAddress,
+          pollId: BigInt(pollId),
+          signer,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("The state tree has already been merged")) {
+        return true;
+      }
+
+      throw error;
+    }
 
     return true;
   }
