@@ -1,6 +1,7 @@
 *.key
 *.key
 zkeys/
+zkeys-tmp/
 proofs/
 tally.json
 session-keys.json
