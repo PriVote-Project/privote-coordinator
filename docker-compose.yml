@@ -3,6 +3,7 @@ services:
   zkeys-init:
     image: alpine:latest
     container_name: zkeys-init
+    restart: "no"
     volumes:
       - zkeys-data:/zkeys
     command: |
@@ -18,6 +19,7 @@ services:
         else
           echo 'Zkeys already downloaded, skipping...'
         fi
+        sleep 5
       "
 
   # Keypair generator (runs once after zkeys are ready)
@@ -26,6 +28,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: keypair-init
+    restart: "no"
     depends_on:
       zkeys-init:
         condition: service_completed_successfully
@@ -47,6 +50,7 @@ services:
         else
           echo 'Keypair already generated, skipping...'
         fi
+        sleep 5
       "
 
   # Main coordinator service
@@ -71,7 +75,7 @@ services:
       - "${COORDINATOR_PORT:-3001}:3001"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/v1/proof/publicKey"]
       interval: 30s
       timeout: 10s
       retries: 3
