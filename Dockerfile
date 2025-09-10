@@ -18,7 +18,6 @@ COPY scripts/ ./scripts/
 COPY tests/ ./tests/
 COPY hardhat.config.cjs ./
 
-
 # Build the application
 RUN pnpm run build
 
