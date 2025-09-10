@@ -1,19 +1,86 @@
 services:
-  coordinator-service:
-    container_name: coordinator-service
+  # Init container to download zkeys once
+  zkeys-init:
+    image: alpine:latest
+    container_name: zkeys-init
+    volumes:
+      - zkeys-data:/zkeys
+    command: |
+      sh -c "
+        if [ ! -f /zkeys/.downloaded ]; then
+          apk add --no-cache curl tar
+          echo 'Downloading zkeys (3.5GB)...'
+          curl -L https://maci-develop-fra.s3.eu-central-1.amazonaws.com/v3.0.0/maci_artifacts_v3.0.0_test.tar.gz -o /tmp/maci_keys.tar.gz
+          tar -xzf /tmp/maci_keys.tar.gz -C /zkeys
+          rm /tmp/maci_keys.tar.gz
+          touch /zkeys/.downloaded
+          echo 'Zkeys downloaded successfully'
+        else
+          echo 'Zkeys already downloaded, skipping...'
+        fi
+      "
+
+  # Keypair generator (runs once after zkeys are ready)
+  keypair-init:
     build:
-      context: ../..
-      dockerfile: apps/coordinator/Dockerfile
+      context: .
+      dockerfile: Dockerfile
+    container_name: keypair-init
+    depends_on:
+      zkeys-init:
+        condition: service_completed_successfully
+    volumes:
+      - zkeys-data:/app/zkeys
+      - keypair-data:/app/keypairs
+    env_file:
+      - ./.env
+    command: |
+      sh -c "
+        if [ ! -f /app/keypairs/.generated ]; then
+          echo 'Generating coordinator keypair...'
+          pnpm run generate-keypair
+          mkdir -p /app/keypairs
+          cp -r /app/proofs /app/keypairs/ 2>/dev/null || true
+          cp /app/coordinator_* /app/keypairs/ 2>/dev/null || true
+          touch /app/keypairs/.generated
+          echo 'Keypair generated successfully'
+        else
+          echo 'Keypair already generated, skipping...'
+        fi
+      "
+
+  # Main coordinator service
+  coordinator-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coordinator-service
+    depends_on:
+      keypair-init:
+        condition: service_completed_successfully
     env_file:
       - ./.env
     environment:
-      # Check Dockerfile to see where bin is downloaded
-      - COORDINATOR_RAPIDSNARK_EXE="/home/node/rapidsnark/build/prover"
+      - NODE_ENV=production
+      - COORDINATOR_RAPIDSNARK_EXE=/app/rapidsnark/build/prover
     volumes:
-      - coordinator-data:/app
+      - zkeys-data:/app/zkeys:ro
+      - keypair-data:/app/keypairs:ro
+      - logs-data:/app/logs
     ports:
-      - "${COORDINATOR_PORT:-3001}:${COORDINATOR_PORT:-3001}"
+      - "${COORDINATOR_PORT:-3001}:3001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
-  coordinator-data:
+  zkeys-data:
+    driver: local
+  keypair-data:
+    driver: local
+  logs-data:
     driver: local
