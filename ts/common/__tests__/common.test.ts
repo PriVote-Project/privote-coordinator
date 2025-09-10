@@ -77,10 +77,10 @@ describe("common", () => {
       expect(() => getRpcUrl(ESupportedNetworks.GNOSIS_CHAIN)).toThrow(ErrorCodes.UNSUPPORTED_NETWORK.toString());
     });
 
-    test("should throw when COORDINATOR_RPC_URL is not set", () => {
-      delete process.env.COORDINATOR_RPC_URL;
+    test("should throw when COORDINATOR_RPC_API_KEY_URL is not set", () => {
+      delete process.env.COORDINATOR_RPC_API_KEY_URL;
       expect(() => getRpcUrl(ESupportedNetworks.OPTIMISM_SEPOLIA)).toThrow(
-        ErrorCodes.COORDINATOR_RPC_URL_NOT_SET.toString(),
+        ErrorCodes.COORDINATOR_RPC_API_KEY_NOT_SET.toString(),
       );
     });
   });
