@@ -4,7 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.init
-    container_name: app-init
     restart: "no"
     volumes:
       - zkeys-data:/app/zkeys
@@ -20,7 +19,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: coordinator-service
     depends_on:
       - app-init
     env_file:
