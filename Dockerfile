@@ -25,7 +25,7 @@ RUN pnpm run build
 FROM node:20-alpine AS runner
 
 # Install required packages
-RUN apk add --no-cache curl bash wget tar
+RUN apk add --no-cache curl bash wget tar su-exec
 
 # Install pnpm
 RUN npm i -g pnpm@9
@@ -41,9 +41,13 @@ WORKDIR /app
 COPY package*.json pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 
-# Copy built application
+# Copy built application and source files
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/ts ./ts
+COPY --from=builder /app/tsconfig*.json ./
+COPY --from=builder /app/nest-cli.json ./
+COPY --from=builder /app/hardhat.config.cjs ./
 
 # Create directories for zkeys and rapidsnark
 RUN mkdir -p /app/zkeys /app/rapidsnark/build

@@ -29,6 +29,7 @@ services:
       dockerfile: Dockerfile
     container_name: keypair-init
     restart: "no"
+    user: "0:0"
     depends_on:
       zkeys-init:
         condition: service_completed_successfully
@@ -39,12 +40,17 @@ services:
       - ./.env
     command: |
       sh -c "
+        # Fix permissions for keypair volume
+        chown -R 1001:1001 /app/keypairs
+        
         if [ ! -f /app/keypairs/.generated ]; then
           echo 'Generating coordinator keypair...'
-          pnpm run generate-keypair
-          mkdir -p /app/keypairs
+          # Switch to nestjs user for keypair generation
+          su-exec 1001:1001 pnpm run generate-keypair
+          # Copy generated files as root, then fix permissions
           cp -r /app/proofs /app/keypairs/ 2>/dev/null || true
           cp /app/coordinator_* /app/keypairs/ 2>/dev/null || true
+          chown -R 1001:1001 /app/keypairs
           touch /app/keypairs/.generated
           echo 'Keypair generated successfully'
         else
