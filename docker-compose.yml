@@ -1,73 +1,26 @@
 services:
-  # Init container to download zkeys once
-  zkeys-init:
-    image: alpine:latest
-    container_name: zkeys-init
-    restart: "no"
-    volumes:
-      - zkeys-data:/zkeys
-    command: |
-      sh -c "
-        if [ ! -f /zkeys/.downloaded ]; then
-          apk add --no-cache curl tar
-          echo 'Downloading zkeys (3.5GB)...'
-          curl -L https://maci-develop-fra.s3.eu-central-1.amazonaws.com/v3.0.0/maci_artifacts_v3.0.0_test.tar.gz -o /tmp/maci_keys.tar.gz
-          tar -xzf /tmp/maci_keys.tar.gz -C /zkeys
-          rm /tmp/maci_keys.tar.gz
-          touch /zkeys/.downloaded
-          echo 'Zkeys downloaded successfully'
-        else
-          echo 'Zkeys already downloaded, skipping...'
-        fi
-        sleep 5
-      "
-
-  # Keypair generator (runs once after zkeys are ready)
-  keypair-init:
+  # Combined init container
+  app-init:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: keypair-init
+      dockerfile: Dockerfile.init
     restart: "no"
-    user: "0:0"
-    depends_on:
-      zkeys-init:
-        condition: service_completed_successfully
     volumes:
       - zkeys-data:/app/zkeys
       - keypair-data:/app/keypairs
     env_file:
       - ./.env
-    command: |
-      sh -c "
-        # Fix permissions for keypair volume
-        chown -R 1001:1001 /app/keypairs
-        
-        if [ ! -f /app/keypairs/.generated ]; then
-          echo 'Generating coordinator keypair...'
-          # Switch to nestjs user for keypair generation
-          su-exec 1001:1001 pnpm run generate-keypair
-          # Copy generated files as root, then fix permissions
-          cp -r /app/proofs /app/keypairs/ 2>/dev/null || true
-          cp /app/coordinator_* /app/keypairs/ 2>/dev/null || true
-          chown -R 1001:1001 /app/keypairs
-          touch /app/keypairs/.generated
-          echo 'Keypair generated successfully'
-        else
-          echo 'Keypair already generated, skipping...'
-        fi
-        sleep 5
-      "
+    environment:
+      - NODE_ENV=production
+    command: ["/app/scripts/init.sh"]
 
   # Main coordinator service
   coordinator-service:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: coordinator-service
     depends_on:
-      keypair-init:
-        condition: service_completed_successfully
+      - app-init
     env_file:
       - ./.env
     environment:
@@ -85,7 +38,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
 
 volumes:
   zkeys-data:

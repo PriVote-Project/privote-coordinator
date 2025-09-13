@@ -25,7 +25,7 @@ RUN pnpm run build
 FROM node:20-alpine AS runner
 
 # Install required packages
-RUN apk add --no-cache curl bash wget tar su-exec
+RUN apk add --no-cache curl bash wget tar
 
 # Install pnpm
 RUN npm i -g pnpm@9
@@ -50,14 +50,19 @@ COPY --from=builder /app/nest-cli.json ./
 COPY --from=builder /app/hardhat.config.cjs ./
 
 # Create directories for zkeys and rapidsnark
-RUN mkdir -p /app/zkeys /app/rapidsnark/build
+RUN mkdir -p /app/zkeys /app/rapidsnark/build /app/logs
 
 # Download rapidsnark prover
 RUN wget -qO /app/rapidsnark/build/prover https://maci-devops-zkeys.s3.ap-northeast-2.amazonaws.com/rapidsnark-linux-amd64-1c137 && \
     chmod +x /app/rapidsnark/build/prover
 
-# Change ownership
+# Change ownership of all directories
 RUN chown -R nestjs:nodejs /app
+
+# Add startup script for waiting on init
+COPY scripts/wait-for-init.sh ./scripts/wait-for-init.sh
+RUN chmod +x ./scripts/wait-for-init.sh && \
+    chown nestjs:nodejs ./scripts/wait-for-init.sh
 
 USER nestjs
 
@@ -69,6 +74,5 @@ ENV COORDINATOR_RAPIDSNARK_EXE="/app/rapidsnark/build/prover"
 # Expose port
 EXPOSE 3001
 
-# Start command
-CMD ["pnpm", "start:prod"]
-
+# Start command with init wait
+CMD ["./scripts/wait-for-init.sh"]
