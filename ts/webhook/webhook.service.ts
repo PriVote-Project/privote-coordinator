@@ -8,6 +8,7 @@ import type {
 
 import { ESupportedNetworks } from "../common/networks";
 import { SchedulerService } from "../scheduler/scheduler.service";
+import { ErrorCodes } from "../common";
 
 @Injectable()
 export class WebhookService {
@@ -118,12 +119,12 @@ export class WebhookService {
       // Handle specific scheduler errors
       const errorMessage = (error as Error).message;
       
-      if (errorMessage.includes("POLL_ALREADY_SCHEDULED")) {
+      if (errorMessage.includes(ErrorCodes.POLL_ALREADY_SCHEDULED.toString())) {
         this.logger.warn(`Poll ${pollId} is already scheduled for finalization`);
         return; // Don't throw error for already scheduled polls
       }
 
-      if (errorMessage.includes("POLL_ALREADY_TALLIED")) {
+      if (errorMessage.includes(ErrorCodes.POLL_ALREADY_TALLIED.toString())) {
         this.logger.warn(`Poll ${pollId} has already been tallied`);
         return; // Don't throw error for already tallied polls
       }
