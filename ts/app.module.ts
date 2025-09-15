@@ -8,6 +8,7 @@ import { RedisModule } from "./redis/redis.module";
 import { SessionKeysModule } from "./sessionKeys/sessionKeys.module";
 import { SubgraphModule } from "./subgraph/subgraph.module";
 import { SchedulerModule } from "./scheduler/scheduler.module";
+import { WebhookModule } from "./webhook/webhook.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { SchedulerModule } from "./scheduler/scheduler.module";
     SessionKeysModule,
     SubgraphModule,
     SchedulerModule,
+    WebhookModule,
   ],
 })
 export class AppModule {}

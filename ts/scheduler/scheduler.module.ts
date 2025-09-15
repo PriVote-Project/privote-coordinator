@@ -12,5 +12,6 @@ import { SchedulerService } from "./scheduler.service";
   imports: [SessionKeysModule, RedisModule, ScheduleModule.forRoot(), ProofModule],
   providers: [SchedulerService],
   controllers: [SchedulerController],
+  exports: [SchedulerService],
 })
 export class SchedulerModule {}
