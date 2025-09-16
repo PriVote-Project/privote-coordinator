@@ -56,13 +56,9 @@ RUN mkdir -p /app/zkeys /app/rapidsnark/build /app/logs
 RUN wget -qO /app/rapidsnark/build/prover https://maci-devops-zkeys.s3.ap-northeast-2.amazonaws.com/rapidsnark-linux-amd64-1c137 && \
     chmod +x /app/rapidsnark/build/prover
 
-# Change ownership of all directories
-RUN chown -R nestjs:nodejs /app
-
-# Add startup script for waiting on init
-COPY scripts/wait-for-init.sh ./scripts/wait-for-init.sh
+# Change ownership and permissions
 RUN chmod +x ./scripts/wait-for-init.sh && \
-    chown nestjs:nodejs ./scripts/wait-for-init.sh
+    chown -R nestjs:nodejs /app
 
 USER nestjs
 

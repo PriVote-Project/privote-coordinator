@@ -28,12 +28,9 @@ COPY hardhat.config.cjs ./
 # Build the application (needed for keypair generation)
 RUN pnpm run build
 
-# Create init script
-COPY scripts/init.sh ./scripts/init.sh
-RUN chmod +x ./scripts/init.sh
-
 # Create directories and fix permissions
 RUN mkdir -p /app/zkeys /app/keypairs && \
+    chmod +x ./scripts/init.sh && \
     chown -R nestjs:nodejs /app
 
 USER nestjs
