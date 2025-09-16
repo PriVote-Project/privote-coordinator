@@ -75,5 +75,5 @@ export class GoldskyWebhookPayloadDto {
     type: Array,
   })
   @IsArray()
-  params!: (string | string[])[];
+  eventParams!: (string | string[])[];
 }
