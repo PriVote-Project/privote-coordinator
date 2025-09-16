@@ -24,7 +24,7 @@ export const getPollKeyForRedis = ({ chain, maciAddress, pollId, test = false }:
 export const getPollKeyFromObject = (scheduledPoll: IIdentityScheduledPoll, test?: boolean): string =>
   getPollKeyForRedis({
     chain: scheduledPoll.chain,
-    maciAddress: scheduledPoll.maciAddress,
+    maciAddress: scheduledPoll.maciAddress.toLowerCase(),
     pollId: scheduledPoll.pollId,
     test,
   });

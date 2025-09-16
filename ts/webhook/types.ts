@@ -1,5 +1,6 @@
 import type { Hex } from "viem";
 import type { ESupportedNetworks } from "../common/networks";
+import type { EMode } from "@maci-protocol/sdk";
 
 /**
  * Webhook request payload from Goldsky
@@ -69,6 +70,11 @@ export interface IProcessedPollData {
    * Poll ID
    */
   pollId: string;
+
+  /**
+   * Mode
+   */
+  mode: EMode;
 
   /**
    * Chain

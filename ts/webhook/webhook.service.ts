@@ -85,6 +85,7 @@ export class WebhookService {
     return {
       maciAddress: address,
       pollId: eventParams[0],
+      mode: Number(eventParams[7]) as EMode,
       chain: network,
       deploymentBlockNumber: blockNumber,
       transactionHash,
@@ -97,10 +98,7 @@ export class WebhookService {
    * @param pollData - Processed poll data
    */
   private async registerPollForFinalization(pollData: IProcessedPollData): Promise<void> {
-    const { maciAddress, pollId, chain, deploymentBlockNumber } = pollData;
-
-    // Default to QV mode if not specified - this should be configurable
-    const mode = EMode.QV;
+    const { maciAddress, pollId, chain, deploymentBlockNumber, mode } = pollData;
 
     try {
       await this.schedulerService.registerPoll({
@@ -144,7 +142,7 @@ export class WebhookService {
       return false;
     }
 
-    if (!Array.isArray(payload.eventParams) || payload.eventParams.length !== 10) {
+    if (!Array.isArray(payload.eventParams) || payload.eventParams.length !== 11) {
       return false;
     }
 
