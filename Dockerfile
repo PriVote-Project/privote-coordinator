@@ -10,7 +10,7 @@ COPY nest-cli.json ./
 
 # Install pnpm and dependencies
 RUN npm i -g pnpm@9
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Copy source code
 COPY ts/ ./ts/
@@ -39,7 +39,7 @@ WORKDIR /app
 
 # Copy package files and install production dependencies
 COPY package*.json pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install
 
 # Copy built application and source files
 COPY --from=builder /app/build ./build
