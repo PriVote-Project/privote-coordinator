@@ -39,6 +39,7 @@ export class SchedulerController {
       endDate: 0,
       merged: false,
       proofsGenerated: false,
+      retryCount: 0,
     };
 
     return this.schedulerService.registerPoll(schedulePollWithSignerArgs).catch((error: Error) => {

@@ -107,9 +107,10 @@ export class WebhookService {
         chain,
         deploymentBlockNumber,
         mode,
-        endDate: 0, // Will be fetched from the contract
+        endDate: 0,
         merged: false,
         proofsGenerated: false,
+        retryCount: 0,
       });
 
       this.logger.log(`Poll ${pollId} registered for finalization on ${chain}`);
