@@ -17,7 +17,8 @@ import { RedisService } from "../redis/redis.service";
 import { getPollKeyFromObject } from "../redis/utils";
 import { SessionKeysService } from "../sessionKeys/sessionKeys.service";
 
-const BUFFER_TIMEOUT = 15 * 1000; // 15 seconds buffer for poll finalization
+const BUFFER_TIMEOUT = 15 * 1000;
+const MAX_POLL_FINALIZATION_RETRIES = 3;
 
 @Injectable()
 export class SchedulerService implements OnModuleInit {
@@ -128,7 +129,7 @@ export class SchedulerService implements OnModuleInit {
    * @param args - generate proofs arguments
    */
   async finalizePoll(poll: IScheduledPoll): Promise<void> {
-    const { maciAddress, pollId, chain, deploymentBlockNumber, mode, merged, proofsGenerated } = poll;
+    const { maciAddress, pollId, chain, mode, merged, proofsGenerated } = poll;
 
     const key = getPollKeyFromObject({ maciAddress, pollId, chain });
 
@@ -167,7 +168,7 @@ export class SchedulerService implements OnModuleInit {
           .then(() => this.redisService.set(key, JSON.stringify({ ...poll, merged: true })))
           .catch(async (error: Error) => {
             await this.deleteScheduledPoll({ maciAddress, pollId, chain });
-            await this.setupPollFinalization(poll);
+            await this.setupPollFinalization({...poll, retryCount: poll.retryCount++ });
 
             throw new Error(`Error merging poll ${pollId}: ${error.message}`);
           });
@@ -180,13 +181,12 @@ export class SchedulerService implements OnModuleInit {
             poll: Number(pollId),
             chain,
             mode,
-            startBlock: deploymentBlockNumber,
             blocksPerBatch: Number(process.env.COORDINATOR_BLOCK_BATCH_SIZE || 1000),
           })
           .then(() => this.redisService.set(key, JSON.stringify({ ...poll, merged: true, proofsGenerated: true })))
           .catch(async (error: Error) => {
             await this.deleteScheduledPoll({ maciAddress, pollId, chain });
-            await this.setupPollFinalization({ ...poll, merged: true });
+            await this.setupPollFinalization({ ...poll, merged: true, retryCount: poll.retryCount++ });
 
             throw new Error(`Error generating proofs for poll ${pollId}: ${error.message}`);
           });
@@ -201,7 +201,7 @@ export class SchedulerService implements OnModuleInit {
         .then(() => this.deleteScheduledPoll({ maciAddress, pollId, chain }))
         .catch(async (error: Error) => {
           await this.deleteScheduledPoll({ maciAddress, pollId, chain });
-          await this.setupPollFinalization({ ...poll, merged: true, proofsGenerated: true });
+          await this.setupPollFinalization({ ...poll, merged: true, proofsGenerated: true, retryCount: poll.retryCount++ });
 
           throw new Error(`Error submitting proofs for poll ${pollId}: ${error.message}`);
         });
@@ -216,7 +216,13 @@ export class SchedulerService implements OnModuleInit {
    * @return delay in milliseconds until the poll is scheduled for finalization
    */
   private async setupPollFinalization(poll: IScheduledPoll): Promise<ISetupPollFinalizationResponse> {
-    const { maciAddress, pollId, chain, endDate } = poll;
+    const { maciAddress, pollId, chain, endDate, retryCount } = poll;
+
+    if (retryCount >= MAX_POLL_FINALIZATION_RETRIES) {
+      this.logger.error(`Error: ${ErrorCodes.POLL_FINALIZATION_MAX_RETRIES}, poll has reached maximum finalization retries`);
+      throw new Error(ErrorCodes.POLL_FINALIZATION_MAX_RETRIES.toString());
+    }
+
     const key = getPollKeyFromObject({ maciAddress, pollId, chain });
 
     await this.redisService.set(key, JSON.stringify(poll));
@@ -288,6 +294,7 @@ export class SchedulerService implements OnModuleInit {
       endDate,
       merged: false,
       proofsGenerated: false,
+      retryCount: 0,
     });
 
     return { isScheduled: true };

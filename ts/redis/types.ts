@@ -50,6 +50,11 @@ export interface IScheduledPoll extends IIdentityScheduledPoll {
    * Whether the proofs has been generated
    */
   proofsGenerated: boolean;
+
+  /**
+   * Retry count
+   */
+  retryCount: number;
 }
 
 /**
