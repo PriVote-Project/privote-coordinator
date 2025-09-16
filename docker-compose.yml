@@ -30,8 +30,6 @@ services:
       - zkeys-data:/app/zkeys:ro
       - keypair-data:/app/keypairs:ro
       - logs-data:/app/logs
-    ports:
-      - "${COORDINATOR_PORT:-3001}:3001"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/v1/proof/publicKey"]

@@ -19,7 +19,7 @@ export class RedisService implements OnModuleInit {
    */
   constructor() {
     this.client = createClient({
-      url: process.env.COORDINATOR_REDIS_URL || `redis://${process.env.COORDINATOR_REDIS_HOST}:${process.env.COORDINATOR_REDIS_PORT}`,
+      url: process.env.COORDINATOR_REDIS_URL,
       disableOfflineQueue: true,
     });
   }
