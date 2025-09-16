@@ -47,7 +47,6 @@ export class WebhookService {
    * @returns Processing response with success/failure counts
    */
   async processGoldskyWebhook(payload: IGoldskyWebhookPayload): Promise<boolean> {
-    this.logger.log(`Processing PollCreated event from Goldsky webhook`);
     try {
       if (payload.eventSignature !== "PollCreated") {
         this.logger.warn(`Skipping non-PollCreated event: ${payload.eventSignature}`);
@@ -57,9 +56,6 @@ export class WebhookService {
       const processedPoll = this.processPollCreatedEvent(payload);
       await this.registerPollForFinalization(processedPoll);
 
-      this.logger.log(
-        `Successfully processed PollCreated event for poll ${processedPoll.pollId} on ${processedPoll.chain}`,
-      );
       return true;
     } catch (error) {
       this.logger.error(`Failed to process PollCreated event: ${(error as Error).message}`);

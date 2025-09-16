@@ -51,10 +51,6 @@ export class WebhookController {
       // Process the webhook payload
       const result = await this.webhookService.processGoldskyWebhook(payload);
 
-      this.logger.log(
-        `Webhook processing completed: ${result ? "success" : "failure"}`,
-      );
-
       return result;
     } catch (error) {
       this.logger.error(`Error processing Goldsky webhook:`, error);
