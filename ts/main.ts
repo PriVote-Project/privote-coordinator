@@ -52,4 +52,7 @@ async function bootstrap() {
   await app.listen(process.env.COORDINATOR_PORT || 3000, process.env.COORDINATOR_HOST || "127.0.0.1");
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('Failed to start the application:', error);
+  process.exit(1);
+});
