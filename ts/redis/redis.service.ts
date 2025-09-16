@@ -19,10 +19,13 @@ export class RedisService implements OnModuleInit {
    */
   constructor() {
     this.client = createClient({
-      url: process.env.COORDINATOR_REDIS_URL,
+      username: process.env.COORDINATOR_REDIS_USERNAME,
+      password: process.env.COORDINATOR_REDIS_PASSWORD,
       disableOfflineQueue: true,
       socket: {
-        connectTimeout: 10000, // 10 seconds
+        host: process.env.COORDINATOR_REDIS_HOST,
+        port: Number(process.env.COORDINATOR_REDIS_PORT),
+        connectTimeout: 10000,
         reconnectStrategy: (retries) => Math.min(retries * 50, 500)
       }
     });
