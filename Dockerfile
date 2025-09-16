@@ -32,7 +32,7 @@ RUN npm i -g pnpm@9
 
 # Create app user
 RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nestjs -u 1001
+RUN adduser -S nestjs -u 1001 -G nodejs
 
 # Set working directory
 WORKDIR /app
