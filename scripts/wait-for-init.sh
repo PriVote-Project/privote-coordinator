@@ -10,4 +10,4 @@ while [ ! -f /app/zkeys/.downloaded ] || [ ! -f /app/keypairs/.generated ]; do
 done
 
 echo "Initialization completed. Starting application..."
-exec pnpm start:prod
+exec pnpm start

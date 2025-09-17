@@ -14,5 +14,6 @@ import { ProofGeneratorService } from "./proof.service";
   imports: [FileModule, CryptoModule, SessionKeysModule, SubgraphModule],
   controllers: [ProofController],
   providers: [ProofGeneratorService, ProofGateway, ProofServiceGuard],
+  exports: [ProofGeneratorService],
 })
 export class ProofModule {}

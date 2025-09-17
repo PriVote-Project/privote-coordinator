@@ -10,7 +10,7 @@ COPY nest-cli.json ./
 
 # Install pnpm and dependencies
 RUN npm i -g pnpm@9
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Copy source code
 COPY ts/ ./ts/
@@ -32,14 +32,14 @@ RUN npm i -g pnpm@9
 
 # Create app user
 RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nestjs -u 1001
+RUN adduser -S nestjs -u 1001 -G nodejs
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files and install production dependencies
 COPY package*.json pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install
 
 # Copy built application and source files
 COPY --from=builder /app/build ./build
@@ -56,13 +56,9 @@ RUN mkdir -p /app/zkeys /app/rapidsnark/build /app/logs
 RUN wget -qO /app/rapidsnark/build/prover https://maci-devops-zkeys.s3.ap-northeast-2.amazonaws.com/rapidsnark-linux-amd64-1c137 && \
     chmod +x /app/rapidsnark/build/prover
 
-# Change ownership of all directories
-RUN chown -R nestjs:nodejs /app
-
-# Add startup script for waiting on init
-COPY scripts/wait-for-init.sh ./scripts/wait-for-init.sh
+# Change ownership and permissions
 RUN chmod +x ./scripts/wait-for-init.sh && \
-    chown nestjs:nodejs ./scripts/wait-for-init.sh
+    chown -R nestjs:nodejs /app
 
 USER nestjs
 

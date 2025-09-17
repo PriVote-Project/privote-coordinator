@@ -11,29 +11,19 @@ RUN npm i -g pnpm@9
 
 # Create app user
 RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nestjs -u 1001
+RUN adduser -S nestjs -u 1001 -G nodejs
 
 # Copy package files and install dependencies
 COPY package*.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-# Copy necessary files
+# Copy only necessary files for keypair generation
 COPY scripts/ ./scripts/
-COPY ts/ ./ts/
-COPY tests/ ./tests/
 COPY tsconfig*.json ./
-COPY nest-cli.json ./
-COPY hardhat.config.cjs ./
-
-# Build the application (needed for keypair generation)
-RUN pnpm run build
-
-# Create init script
-COPY scripts/init.sh ./scripts/init.sh
-RUN chmod +x ./scripts/init.sh
 
 # Create directories and fix permissions
 RUN mkdir -p /app/zkeys /app/keypairs && \
+    chmod +x ./scripts/init.sh && \
     chown -R nestjs:nodejs /app
 
 USER nestjs
