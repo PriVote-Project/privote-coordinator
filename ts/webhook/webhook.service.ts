@@ -10,6 +10,10 @@ import { ESupportedNetworks } from "../common/networks";
 import { SchedulerService } from "../scheduler/scheduler.service";
 import { ErrorCodes } from "../common";
 
+const POLL_CREATED_PARAMS_LENGTH = 11;
+const POLL_ID_INDEX = 0;
+const MODE_INDEX = 7;
+
 @Injectable()
 export class WebhookService {
   /**
@@ -80,8 +84,8 @@ export class WebhookService {
 
     return {
       maciAddress: address,
-      pollId: eventParams[0],
-      mode: Number(eventParams[7]) as EMode,
+      pollId: eventParams[POLL_ID_INDEX],
+      mode: Number(eventParams[MODE_INDEX]) as EMode,
       chain: network,
       deploymentBlockNumber: blockNumber,
       transactionHash,
@@ -139,7 +143,7 @@ export class WebhookService {
       return false;
     }
 
-    if (!Array.isArray(payload.eventParams) || payload.eventParams.length !== 11) {
+    if (!Array.isArray(payload.eventParams) || payload.eventParams.length !== POLL_CREATED_PARAMS_LENGTH) {
       return false;
     }
 

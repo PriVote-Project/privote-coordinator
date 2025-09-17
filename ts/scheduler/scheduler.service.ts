@@ -168,7 +168,7 @@ export class SchedulerService implements OnModuleInit {
           .then(() => this.redisService.set(key, JSON.stringify({ ...poll, merged: true })))
           .catch(async (error: Error) => {
             await this.deleteScheduledPoll({ maciAddress, pollId, chain });
-            await this.setupPollFinalization({...poll, retryCount: poll.retryCount++ });
+            await this.setupPollFinalization({...poll, retryCount: ++poll.retryCount });
 
             throw new Error(`Error merging poll ${pollId}: ${error.message}`);
           });
@@ -186,7 +186,7 @@ export class SchedulerService implements OnModuleInit {
           .then(() => this.redisService.set(key, JSON.stringify({ ...poll, merged: true, proofsGenerated: true })))
           .catch(async (error: Error) => {
             await this.deleteScheduledPoll({ maciAddress, pollId, chain });
-            await this.setupPollFinalization({ ...poll, merged: true, retryCount: poll.retryCount++ });
+            await this.setupPollFinalization({ ...poll, merged: true, retryCount: ++poll.retryCount });
 
             throw new Error(`Error generating proofs for poll ${pollId}: ${error.message}`);
           });
@@ -201,7 +201,7 @@ export class SchedulerService implements OnModuleInit {
         .then(() => this.deleteScheduledPoll({ maciAddress, pollId, chain }))
         .catch(async (error: Error) => {
           await this.deleteScheduledPoll({ maciAddress, pollId, chain });
-          await this.setupPollFinalization({ ...poll, merged: true, proofsGenerated: true, retryCount: poll.retryCount++ });
+          await this.setupPollFinalization({ ...poll, merged: true, proofsGenerated: true, retryCount: ++poll.retryCount });
 
           throw new Error(`Error submitting proofs for poll ${pollId}: ${error.message}`);
         });

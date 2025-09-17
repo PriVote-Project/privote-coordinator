@@ -11,7 +11,7 @@ import type { IGetPollKeyForRedisParams, IIdentityScheduledPoll } from "./types"
  */
 export const getPollKeyForRedis = ({ chain, maciAddress, pollId, test = false }: IGetPollKeyForRedisParams): string => {
   const isTest = test || process.env.NODE_ENV === "test";
-  return `${chain}-${maciAddress}-poll-${pollId}${isTest ? `-test` : ""}`;
+  return `${chain}-${maciAddress.toLowerCase()}-poll-${pollId}${isTest ? `-test` : ""}`;
 };
 
 /**
@@ -24,7 +24,7 @@ export const getPollKeyForRedis = ({ chain, maciAddress, pollId, test = false }:
 export const getPollKeyFromObject = (scheduledPoll: IIdentityScheduledPoll, test?: boolean): string =>
   getPollKeyForRedis({
     chain: scheduledPoll.chain,
-    maciAddress: scheduledPoll.maciAddress.toLowerCase(),
+    maciAddress: scheduledPoll.maciAddress,
     pollId: scheduledPoll.pollId,
     test,
   });
