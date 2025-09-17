@@ -1,5 +1,4 @@
 {
-  "plugins": ["prettier-plugin-solidity"],
   "arrowParens": "always",
   "bracketSpacing": true,
   "endOfLine": "lf",
@@ -8,16 +7,5 @@
   "semi": true,
   "tabWidth": 2,
   "useTabs": false,
-  "trailingComma": "all",
-  "overrides": [
-    {
-      "files": "*.sol",
-      "options": {
-        "printWidth": 120,
-        "useTabs": false,
-        "singleQuote": false,
-        "semi": true
-      }
-    }
-  ]
+  "trailingComma": "all"
 }

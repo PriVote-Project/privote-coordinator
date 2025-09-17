@@ -39,7 +39,7 @@ export interface IGoldskyWebhookPayload {
   /**
    * Event Signature
    */
-  eventSignature: "PollCreated";
+  eventSignature: "DeployPoll";
 
   /**
    * Chain ID

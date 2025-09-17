@@ -25,21 +25,22 @@ export class WebhookController {
   constructor(private readonly webhookService: WebhookService) {}
 
   /**
-   * Handle Goldsky webhook for PollCreated events
+   * Handle Goldsky webhook for DeployPoll events
    * This endpoint receives decoded logs from Goldsky pipeline and registers polls for finalization
    */
   @ApiOperation({
-    summary: "Handle Goldsky webhook for PollCreated events",
-    description: "Receives decoded PollCreated event logs from Goldsky pipeline and automatically registers polls for finalization",
+    summary: "Handle Goldsky webhook for DeployPoll events",
+    description:
+      "Receives decoded DeployPoll event logs from Goldsky pipeline and automatically registers polls for finalization",
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: "Webhook processed successfully",
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: "Invalid webhook payload" })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: "Failed to process webhook" })
-  @Post("goldsky/poll-created")
-  async handleGoldskyPollCreated(@Body() payload: GoldskyWebhookPayloadDto): Promise<boolean> {
+  @Post("goldsky/deploy-poll")
+  async handleGoldskyDeployPoll(@Body() payload: GoldskyWebhookPayloadDto): Promise<boolean> {
     this.logger.log(`Received Goldsky webhook`);
 
     try {
