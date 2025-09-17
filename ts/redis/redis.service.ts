@@ -24,22 +24,8 @@ export class RedisService implements OnModuleInit {
       disableOfflineQueue: true,
       socket: {
         host: process.env.COORDINATOR_REDIS_HOST,
-        port: Number(process.env.COORDINATOR_REDIS_PORT),
-        connectTimeout: 10000,
-        reconnectStrategy: (retries) => Math.min(retries * 50, 500)
+        port: Number(process.env.COORDINATOR_REDIS_PORT)
       }
-    });
-
-    this.client.on('error', (error) => {
-      console.error('Redis connection error:', error);
-    });
-    
-    this.client.on('connect', () => {
-      console.log('Connected to Redis successfully');
-    });
-    
-    this.client.on('ready', () => {
-      console.log('Redis client is ready');
     });
   }
 
