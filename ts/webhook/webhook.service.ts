@@ -50,7 +50,7 @@ export class WebhookService {
    * @param schedulerService - scheduler service to register polls
    */
   constructor(private readonly schedulerService: SchedulerService) {
-    this.coordinatorKeypair = new Keypair(new PrivateKey(process.env.COORDINATOR_MACI_PRIVATE_KEY!));
+    this.coordinatorKeypair = new Keypair(PrivateKey.deserialize(process.env.COORDINATOR_MACI_PRIVATE_KEY!));
   }
 
   /**
@@ -212,7 +212,9 @@ export class WebhookService {
 
         const isAuthorized = this.coordinatorKeypair.publicKey.equals(payloadPublicKey);
         if (!isAuthorized) {
-          this.logger.warn("Invalid payload: coordinator public key mismatch");
+          this.logger.warn(
+            `Invalid payload: coordinator public key mismatch: ${payloadPublicKey.serialize()} !== ${this.coordinatorKeypair.publicKey.serialize()}`,
+          );
           return false;
         }
 
