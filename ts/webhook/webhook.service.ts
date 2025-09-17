@@ -1,18 +1,18 @@
 import { EMode } from "@maci-protocol/sdk";
 import { Injectable, Logger } from "@nestjs/common";
 
-import type {
-  IGoldskyWebhookPayload,
-  IProcessedPollData,
-} from "./types";
+import type { IGoldskyWebhookPayload, IProcessedPollData } from "./types";
 
 import { ESupportedNetworks } from "../common/networks";
 import { SchedulerService } from "../scheduler/scheduler.service";
 import { ErrorCodes } from "../common";
+import { Keypair, PrivateKey, PublicKey } from "@maci-protocol/domainobjs";
 
-const POLL_CREATED_PARAMS_LENGTH = 11;
+const POLL_CREATED_PARAMS_LENGTH = 4;
 const POLL_ID_INDEX = 0;
-const MODE_INDEX = 7;
+const POLL_COORDINATOR_PUBLIC_KEY_X_INDEX = 1;
+const POLL_COORDINATOR_PUBLIC_KEY_Y_INDEX = 2;
+const MODE_INDEX = 3;
 
 @Injectable()
 export class WebhookService {
@@ -20,6 +20,11 @@ export class WebhookService {
    * Logger
    */
   private readonly logger = new Logger(WebhookService.name);
+
+  /**
+   * Coordinator keypair for validation
+   */
+  private readonly coordinatorKeypair: Keypair;
 
   /**
    * Chain ID to network mapping
@@ -34,6 +39,8 @@ export class WebhookService {
     84532: ESupportedNetworks.BASE_SEPOLIA,
     421614: ESupportedNetworks.ARBITRUM_SEPOLIA,
     11155420: ESupportedNetworks.OPTIMISM_SEPOLIA,
+    534351: ESupportedNetworks.SCROLL_SEPOLIA,
+    534352: ESupportedNetworks.SCROLL,
     1337: ESupportedNetworks.LOCALHOST,
   };
 
@@ -42,41 +49,42 @@ export class WebhookService {
    *
    * @param schedulerService - scheduler service to register polls
    */
-  constructor(private readonly schedulerService: SchedulerService) {}
+  constructor(private readonly schedulerService: SchedulerService) {
+    this.coordinatorKeypair = new Keypair(new PrivateKey(process.env.COORDINATOR_MACI_PRIVATE_KEY!));
+  }
 
   /**
    * Process Goldsky webhook payload and register polls for finalization
    *
-   * @param payload - Goldsky webhook payload containing PollCreated events
+   * @param payload - Goldsky webhook payload containing DeployPoll events
    * @returns Processing response with success/failure counts
    */
   async processGoldskyWebhook(payload: IGoldskyWebhookPayload): Promise<boolean> {
     try {
-      if (payload.eventSignature !== "PollCreated") {
-        this.logger.warn(`Skipping non-PollCreated event: ${payload.eventSignature}`);
+      if (payload.eventSignature !== "DeployPoll") {
+        this.logger.warn(`Skipping non-DeployPoll event: ${payload.eventSignature}`);
         return false;
       }
 
-      const processedPoll = this.processPollCreatedEvent(payload);
+      const processedPoll = this.processDeployPollEvent(payload);
       await this.registerPollForFinalization(processedPoll);
 
       return true;
     } catch (error) {
-      this.logger.error(`Failed to process PollCreated event: ${(error as Error).message}`);
+      this.logger.error(`Failed to process DeployPoll event: ${(error as Error).message}`);
       return false;
     }
   }
 
   /**
-   * Process a single PollCreated event and extract relevant data
+   * Process a single DeployPoll event and extract relevant data
    *
-   * @param event - PollCreated event from Goldsky
+   * @param event - DeployPoll event from Goldsky
    * @returns Processed poll data
    */
-  private processPollCreatedEvent(event: IGoldskyWebhookPayload): IProcessedPollData {
+  private processDeployPollEvent(event: IGoldskyWebhookPayload): IProcessedPollData {
     const { address, eventParams, blockNumber, transactionHash, chainId } = event;
 
-    // Map chain ID to supported network
     const network = this.chainIdToNetwork[chainId];
     if (!network) {
       throw new Error(`Unsupported chain ID: ${chainId}`);
@@ -115,17 +123,16 @@ export class WebhookService {
 
       this.logger.log(`Poll ${pollId} registered for finalization on ${chain}`);
     } catch (error) {
-      // Handle specific scheduler errors
       const errorMessage = (error as Error).message;
-      
+
       if (errorMessage.includes(ErrorCodes.POLL_ALREADY_SCHEDULED.toString())) {
         this.logger.warn(`Poll ${pollId} is already scheduled for finalization`);
-        return; // Don't throw error for already scheduled polls
+        return;
       }
 
       if (errorMessage.includes(ErrorCodes.POLL_ALREADY_TALLIED.toString())) {
         this.logger.warn(`Poll ${pollId} has already been tallied`);
-        return; // Don't throw error for already tallied polls
+        return;
       }
 
       throw error;
@@ -133,23 +140,90 @@ export class WebhookService {
   }
 
   /**
-   * Validate webhook payload structure
+   * Validate webhook payload structure and coordinator authorization
    *
    * @param payload - Raw webhook payload
-   * @returns True if payload is valid
+   * @returns True if payload is valid and authorized
    */
   validateWebhookPayload(payload: any): payload is IGoldskyWebhookPayload {
-    if (!payload || typeof payload !== "object") {
+    try {
+      if (!payload || typeof payload !== "object") {
+        this.logger.warn("Invalid payload: not an object");
+        return false;
+      }
+
+      const requiredFields = [
+        "id",
+        "transactionHash",
+        "blockNumber",
+        "address",
+        "eventSignature",
+        "chainId",
+        "eventParams",
+      ];
+      for (const field of requiredFields) {
+        if (!(field in payload)) {
+          this.logger.warn(`Invalid payload: missing required field '${field}'`);
+          return false;
+        }
+      }
+
+      if (
+        typeof payload.id !== "string" ||
+        typeof payload.transactionHash !== "string" ||
+        typeof payload.blockNumber !== "number" ||
+        typeof payload.address !== "string" ||
+        typeof payload.eventSignature !== "string" ||
+        typeof payload.chainId !== "number"
+      ) {
+        this.logger.warn("Invalid payload: incorrect field types");
+        return false;
+      }
+
+      if (payload.eventSignature !== "DeployPoll") {
+        this.logger.warn(`Invalid payload: expected eventSignature 'DeployPoll', got '${payload.eventSignature}'`);
+        return false;
+      }
+
+      if (!Array.isArray(payload.eventParams) || payload.eventParams.length !== POLL_CREATED_PARAMS_LENGTH) {
+        this.logger.warn(`Invalid payload: eventParams must be array of length ${POLL_CREATED_PARAMS_LENGTH}`);
+        return false;
+      }
+
+      const isValidParams = payload.eventParams.every((eventParam: any) => {
+        return eventParam && typeof eventParam === "string";
+      });
+
+      if (!isValidParams) {
+        this.logger.warn("Invalid payload: all eventParams must be non-empty strings");
+        return false;
+      }
+
+      if (!this.chainIdToNetwork[payload.chainId]) {
+        this.logger.warn(`Invalid payload: unsupported chainId ${payload.chainId}`);
+        return false;
+      }
+
+      try {
+        const payloadPublicKey = new PublicKey(
+          payload.eventParams[POLL_COORDINATOR_PUBLIC_KEY_X_INDEX],
+          payload.eventParams[POLL_COORDINATOR_PUBLIC_KEY_Y_INDEX],
+        );
+
+        const isAuthorized = this.coordinatorKeypair.publicKey.equals(payloadPublicKey);
+        if (!isAuthorized) {
+          this.logger.warn("Invalid payload: coordinator public key mismatch");
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        this.logger.warn(`Invalid payload: failed to validate coordinator public key - ${(error as Error).message}`);
+        return false;
+      }
+    } catch (error) {
+      this.logger.error(`Payload validation error: ${(error as Error).message}`);
       return false;
     }
-
-    if (!Array.isArray(payload.eventParams) || payload.eventParams.length !== POLL_CREATED_PARAMS_LENGTH) {
-      return false;
-    }
-
-    // Validate each event has required fields
-    return payload.eventParams.every((eventParam: any) => {
-      return eventParam && typeof eventParam === "string";
-    });
   }
 }
