@@ -205,10 +205,10 @@ export class WebhookService {
       }
 
       try {
-        const payloadPublicKey = new PublicKey(
-          payload.eventParams[POLL_COORDINATOR_PUBLIC_KEY_X_INDEX],
-          payload.eventParams[POLL_COORDINATOR_PUBLIC_KEY_Y_INDEX],
-        );
+        const payloadPublicKey = new PublicKey([
+          BigInt(payload.eventParams[POLL_COORDINATOR_PUBLIC_KEY_X_INDEX]),
+          BigInt(payload.eventParams[POLL_COORDINATOR_PUBLIC_KEY_Y_INDEX]),
+        ]);
 
         const isAuthorized = this.coordinatorKeypair.publicKey.equals(payloadPublicKey);
         if (!isAuthorized) {
