@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
 import { createClient, RedisClientType } from "@redis/client";
 
 import { IGetAllSingleObject } from "./types";
@@ -8,6 +8,11 @@ import { IGetAllSingleObject } from "./types";
  */
 @Injectable()
 export class RedisService implements OnModuleInit {
+  /**
+   * Logger instance
+   */
+  private readonly logger = new Logger(RedisService.name);
+
   /**
    * Client instance used to interact with the Redis database.
    */
@@ -24,7 +29,13 @@ export class RedisService implements OnModuleInit {
       disableOfflineQueue: true,
       socket: {
         host: process.env.COORDINATOR_REDIS_HOST,
-        port: Number(process.env.COORDINATOR_REDIS_PORT)
+        port: Number(process.env.COORDINATOR_REDIS_PORT),
+      },
+    });
+
+    this.client.on("error", (error) => {
+      if (!error.message.includes("Socket closed unexpectedly")) {
+        this.logger.error(`Redis error: ${error.message}`);
       }
     });
   }
