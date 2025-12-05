@@ -5,17 +5,10 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 
 import path from "path";
-import url from "url";
 
-/* eslint-disable no-underscore-dangle */
-/* eslint-disable @typescript-eslint/no-shadow */
-const __filename = url.fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-/* eslint-enable no-underscore-dangle */
-/* eslint-disable @typescript-eslint/no-shadow */
-
+const projectRoot = process.cwd();
 dotenv.config({
-  path: [path.resolve(__dirname, "../.env"), path.resolve(__dirname, "../.env.example")],
+  path: [path.resolve(projectRoot, ".env"), path.resolve(projectRoot, ".env.example")],
 });
 
 async function bootstrap() {
